@@ -1,32 +1,51 @@
-import { createSlice, nanoid } from '@reduxjs/toolkit';
-const contactsInitialState = [
-  { id: 'id-1', name: 'Poly', number: '123123' },
-  { id: 'id-2', name: 'Mango', number: '123123' },
-  { id: 'id-3', name: 'Kiwi', number: '123123' },
-  { id: 'id-4', name: 'Apple', number: '123123' },
-  { id: 'id-5', name: 'Graph', number: '123123' },
-];
+import { createSlice } from '@reduxjs/toolkit';
+import { fetchContacts, addContact, deleteContact } from './operations';
+
+const handlePending = state => {
+  state.isLoading = true;
+};
+
+const handleRejected = (state, action) => {
+  state.isLoading = false;
+  state.error = action.payload;
+};
 
 const contactsSlice = createSlice({
   name: 'contacts',
-  initialState: { contactsState: contactsInitialState },
-
-  reducers: {
-    addContact(state, action) {
-      state.contactsState.push({
-        id: nanoid(),
+  initialState: {
+    items: [],
+    isLoading: false,
+    error: null,
+  },
+  extraReducers: {
+    [fetchContacts.pending]: handlePending,
+    [fetchContacts.rejected]: handleRejected,
+    [addContact.pending]: handlePending,
+    [addContact.rejected]: handleRejected,
+    [deleteContact.pending]: handlePending,
+    [deleteContact.rejected]: handleRejected,
+    [fetchContacts.fulfilled](state, action) {
+      state.isLoading = false;
+      state.error = null;
+      state.items = action.payload;
+    },
+    [addContact.fulfilled](state, action) {
+      state.isLoading = false;
+      state.error = null;
+      state.items.push({
         name: action.payload.name,
-        number: action.payload.number,
+        phone: action.payload.phone,
       });
     },
-    deleteContact(state, action) {
-      const index = state.contactsState.findIndex(
-        contact => contact.id === action.payload
+    [deleteContact.fulfilled](state, action) {
+      state.isLoading = false;
+      state.error = null;
+      const index = state.items.findIndex(
+        contact => contact.id === action.payload.id
       );
-      state.contactsState.splice(index, 1);
+      state.items.splice(index, 1);
     },
   },
 });
 
-export const { addContact, deleteContact } = contactsSlice.actions;
 export const contactsReducer = contactsSlice.reducer;
